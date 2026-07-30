@@ -33,8 +33,11 @@ public class PedidoService {
     private final RestTemplate restTemplate;
     private final RabbitTemplate rabbitTemplate;
 
-    private static final String USERS_SERVICE_URL = "http://localhost:8085/users/";
-    private static final String CATALOGO_SERVICE_URL = "http://localhost:8084/produtos/";
+    @org.springframework.beans.factory.annotation.Value("${services.users.url:http://localhost:8085/users/}")
+    private String usersServiceUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${services.catalogo.url:http://localhost:8084/produtos/}")
+    private String catalogoServiceUrl;
 
     public PedidoService(PedidoRepository pedidoRepository, RestTemplate restTemplate, RabbitTemplate rabbitTemplate) {
         this.pedidoRepository = pedidoRepository;
@@ -60,7 +63,7 @@ public class PedidoService {
     public PedidoResponseDTO checkout(PedidoRequestDTO request) {
         // 1. Validar Usuário no microsserviço de usuários
         try {
-            restTemplate.getForObject(USERS_SERVICE_URL + request.usuarioId(), UserDTO.class);
+            restTemplate.getForObject(usersServiceUrl + request.usuarioId(), UserDTO.class);
         } catch (HttpClientErrorException.NotFound ex) {
             throw new RuntimeException("Usuário não encontrado com ID: " + request.usuarioId());
         } catch (Exception ex) {
@@ -76,7 +79,7 @@ public class PedidoService {
             ProductDTO produto;
             // 3.1 Consultar Produto no Catálogo
             try {
-                produto = restTemplate.getForObject(CATALOGO_SERVICE_URL + itemDto.produtoId(), ProductDTO.class);
+                produto = restTemplate.getForObject(catalogoServiceUrl + itemDto.produtoId(), ProductDTO.class);
             } catch (HttpClientErrorException.NotFound ex) {
                 throw new RuntimeException("Produto não encontrado com ID: " + itemDto.produtoId());
             } catch (Exception ex) {
@@ -94,7 +97,7 @@ public class PedidoService {
 
             // 3.3 Decrementar Estoque no Catálogo (Integração REST)
             try {
-                String decrementUrl = CATALOGO_SERVICE_URL + produto.id() + "/decrementar?quantidade=" + itemDto.quantidade();
+                String decrementUrl = catalogoServiceUrl + produto.id() + "/decrementar?quantidade=" + itemDto.quantidade();
                 restTemplate.exchange(decrementUrl, HttpMethod.PUT, HttpEntity.EMPTY, Void.class);
             } catch (Exception ex) {
                 throw new RuntimeException("Erro ao decrementar estoque para o produto " + produto.nome() + ": " + ex.getMessage());
@@ -161,7 +164,7 @@ public class PedidoService {
     private void devolverEstoque(Pedido pedido) {
         for (ItemPedido item : pedido.getItens()) {
             try {
-                String incrementUrl = CATALOGO_SERVICE_URL + item.getProdutoId() + "/incrementar?quantidade=" + item.getQuantidade();
+                String incrementUrl = catalogoServiceUrl + item.getProdutoId() + "/incrementar?quantidade=" + item.getQuantidade();
                 restTemplate.exchange(incrementUrl, HttpMethod.PUT, HttpEntity.EMPTY, Void.class);
             } catch (Exception ex) {
                 System.err.println("Erro ao devolver estoque para o produto " + item.getProdutoId() + ": " + ex.getMessage());

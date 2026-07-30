@@ -40,6 +40,97 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  users-service:
+    build: ./users
+    container_name: users-service
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    depends_on:
+      - postgres
+
+  catalogo-service:
+    build: ./catalogo
+    container_name: catalogo-service
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+    depends_on:
+      - mongodb
+
+  pedido-service:
+    build: ./pedido
+    container_name: pedido-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - RABBITMQ_HOST=rabbitmq
+      - SERVICES_USERS_URL=http://users-service:8085/users/
+      - SERVICES_CATALOGO_URL=http://catalogo-service:8084/produtos/
+    depends_on:
+      - postgres
+      - rabbitmq
+      - users-service
+      - catalogo-service
+
+  pagamento-service:
+    build: ./pagamento
+    container_name: pagamento-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  notificacoes-service:
+    build: ./notificacoes
+    container_name: notificacoes-service
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+
+  api-gateway-service:
+    build: ./api-gateway
+    container_name: api-gateway-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - USERS_URL=http://users-service:8085
+      - CATALOGO_URL=http://catalogo-service:8084
+      - PEDIDO_URL=http://pedido-service:8081
+    depends_on:
+      - users-service
+      - catalogo-service
+      - pedido-service
+
+  frontend-dashboard:
+    build: ./frontend
+    container_name: frontend-dashboard
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway-service
+
 volumes:
   postgres_data:
   mongo_data:
