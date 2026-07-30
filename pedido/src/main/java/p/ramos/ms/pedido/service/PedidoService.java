@@ -1,17 +1,20 @@
 package p.ramos.ms.pedido.service;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import p.ramos.ms.pedido.config.RabbitMQConfig;
 import p.ramos.ms.pedido.dto.ItemPedidoRequestDTO;
 import p.ramos.ms.pedido.dto.ItemPedidoResponseDTO;
 import p.ramos.ms.pedido.dto.PedidoRequestDTO;
 import p.ramos.ms.pedido.dto.PedidoResponseDTO;
 import p.ramos.ms.pedido.dto.ProductDTO;
 import p.ramos.ms.pedido.dto.UserDTO;
+import p.ramos.ms.pedido.dto.PedidoCriadoEvent;
 import p.ramos.ms.pedido.model.ItemPedido;
 import p.ramos.ms.pedido.model.Pedido;
 import p.ramos.ms.pedido.model.StatusPedido;
@@ -27,13 +30,15 @@ public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
     private final RestTemplate restTemplate;
+    private final RabbitTemplate rabbitTemplate;
 
     private static final String USERS_SERVICE_URL = "http://localhost:8085/users/";
     private static final String CATALOGO_SERVICE_URL = "http://localhost:8084/produtos/";
 
-    public PedidoService(PedidoRepository pedidoRepository, RestTemplate restTemplate) {
+    public PedidoService(PedidoRepository pedidoRepository, RestTemplate restTemplate, RabbitTemplate rabbitTemplate) {
         this.pedidoRepository = pedidoRepository;
         this.restTemplate = restTemplate;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -105,6 +110,18 @@ public class PedidoService {
 
         pedido.setValorTotal(total);
         Pedido savedPedido = pedidoRepository.save(pedido);
+
+        // Publicar evento "pedido.criado" no RabbitMQ
+        PedidoCriadoEvent event = new PedidoCriadoEvent(
+                savedPedido.getId(),
+                savedPedido.getUsuarioId(),
+                savedPedido.getValorTotal()
+        );
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.PEDIDO_EXCHANGE,
+                RabbitMQConfig.RK_PEDIDO_CRIADO,
+                event
+        );
 
         return convertToResponseDTO(savedPedido);
     }
