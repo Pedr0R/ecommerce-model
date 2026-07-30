@@ -3,6 +3,7 @@ package p.ramos.ms.catalogo.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -21,6 +22,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/produtos")
+@CrossOrigin(origins = "*")
 public class ProdutoController {
 
     private final ProdutoService produtoService;
@@ -67,13 +69,13 @@ public class ProdutoController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}/decrementar")
+    @PutMapping("/{id}/decrementar")
     public ResponseEntity<Void> decrementStock(@PathVariable String id, @RequestParam Integer quantidade) {
         produtoService.decrementarEstoque(id, quantidade);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}/incrementar")
+    @PutMapping("/{id}/incrementar")
     public ResponseEntity<Void> incrementStock(@PathVariable String id, @RequestParam Integer quantidade) {
         produtoService.incrementarEstoque(id, quantidade);
         return ResponseEntity.noContent().build();

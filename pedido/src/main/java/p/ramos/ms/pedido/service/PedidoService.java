@@ -94,7 +94,7 @@ public class PedidoService {
             // 3.3 Decrementar Estoque no Catálogo (Integração REST)
             try {
                 String decrementUrl = CATALOGO_SERVICE_URL + produto.id() + "/decrementar?quantidade=" + itemDto.quantidade();
-                restTemplate.exchange(decrementUrl, HttpMethod.PATCH, HttpEntity.EMPTY, Void.class);
+                restTemplate.exchange(decrementUrl, HttpMethod.PUT, HttpEntity.EMPTY, Void.class);
             } catch (Exception ex) {
                 throw new RuntimeException("Erro ao decrementar estoque para o produto " + produto.nome() + ": " + ex.getMessage());
             }
@@ -145,7 +145,7 @@ public class PedidoService {
         for (ItemPedido item : pedido.getItens()) {
             try {
                 String incrementUrl = CATALOGO_SERVICE_URL + item.getProdutoId() + "/incrementar?quantidade=" + item.getQuantidade();
-                restTemplate.exchange(incrementUrl, HttpMethod.PATCH, HttpEntity.EMPTY, Void.class);
+                restTemplate.exchange(incrementUrl, HttpMethod.PUT, HttpEntity.EMPTY, Void.class);
             } catch (Exception ex) {
                 System.err.println("Erro ao devolver estoque para o produto " + item.getProdutoId() + ": " + ex.getMessage());
             }
