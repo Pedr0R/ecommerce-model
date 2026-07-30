@@ -15,6 +15,7 @@ import p.ramos.ms.pedido.dto.PedidoResponseDTO;
 import p.ramos.ms.pedido.dto.ProductDTO;
 import p.ramos.ms.pedido.dto.UserDTO;
 import p.ramos.ms.pedido.dto.PedidoCriadoEvent;
+import p.ramos.ms.pedido.dto.PagamentoStatusEvent;
 import p.ramos.ms.pedido.model.ItemPedido;
 import p.ramos.ms.pedido.model.Pedido;
 import p.ramos.ms.pedido.model.StatusPedido;
@@ -131,13 +132,29 @@ public class PedidoService {
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado com ID: " + id));
 
+        StatusPedido oldStatus = pedido.getStatus();
+
         // Se o pagamento for recusado, devolvemos o estoque no catálogo
-        if (status == StatusPedido.RECUSADO && pedido.getStatus() == StatusPedido.AGUARDANDO_PAGAMENTO) {
+        if (status == StatusPedido.RECUSADO && oldStatus == StatusPedido.AGUARDANDO_PAGAMENTO) {
             devolverEstoque(pedido);
         }
 
         pedido.setStatus(status);
         Pedido updated = pedidoRepository.save(pedido);
+
+        // Publicar evento no RabbitMQ se o status mudou
+        if (oldStatus != status) {
+            PagamentoStatusEvent event = new PagamentoStatusEvent(
+                    updated.getId(),
+                    updated.getUsuarioId(),
+                    updated.getValorTotal(),
+                    status.name()
+            );
+            String routingKey = "pedido.status." + status.name().toLowerCase();
+            rabbitTemplate.convertAndSend(RabbitMQConfig.PEDIDO_EXCHANGE, routingKey, event);
+            System.out.println(">>> [PEDIDO] Evento de atualizacao de status publicado: " + routingKey);
+        }
+
         return convertToResponseDTO(updated);
     }
 

@@ -113,6 +113,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Binding bindingNotificacoesStatusUpdate() {
+        return BindingBuilder.bind(notificacoesQueue()).to(pedidoExchange()).with("pedido.status.*");
+    }
+
+    @Bean
     public Binding bindingNotificacoesDlq() {
         return BindingBuilder.bind(notificacoesQueueDlq()).to(pedidoExchangeDlq()).with("notificacao.envio.dlq");
     }
