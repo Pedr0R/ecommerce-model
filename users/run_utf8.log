@@ -70,3 +70,15 @@
 2026-07-28T00:34:40.693-03:00  WARN 18400 --- [users] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
 2026-07-28T00:34:41.756-03:00  INFO 18400 --- [users] [  restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
 2026-07-28T00:34:41.765-03:00  INFO 18400 --- [users] [  restartedMain] p.ramos.ms.users.UsersApplication        : Started UsersApplication in 8.466 seconds (process running for 9.175)
+2026-07-28T00:35:32.936-03:00  INFO 18400 --- [users] [nio-8085-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-07-28T00:35:32.937-03:00  INFO 18400 --- [users] [nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-07-28T00:35:32.941-03:00  INFO 18400 --- [users] [nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+Hibernate: select um1_0.id,um1_0.email,um1_0.name,um1_0.password from tb_users um1_0 where um1_0.email=?
+2026-07-28T00:35:35.243-03:00  WARN 18400 --- [users] [nio-8085-exec-1] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [org.springframework.dao.IncorrectResultSizeDataAccessException: Query did not return a unique result: 2 results were returned]
+Hibernate: select um1_0.id,um1_0.email,um1_0.name,um1_0.password from tb_users um1_0 where um1_0.email=?
+Hibernate: insert into tb_users (email,name,password) values (?,?,?)
+Hibernate: select um1_0.id,um1_0.email,um1_0.name,um1_0.password from tb_users um1_0 where um1_0.email=?
+2026-07-28T00:35:48.649-03:00  WARN 18400 --- [users] [nio-8085-exec-8] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [java.lang.RuntimeException: E-mail já cadastrado!]
+Hibernate: select um1_0.id,um1_0.email,um1_0.name,um1_0.password from tb_users um1_0 where um1_0.email=?
+Hibernate: insert into tb_users (email,name,password) values (?,?,?)
+Hibernate: select um1_0.id,um1_0.email,um1_0.name,um1_0.password from tb_users um1_0
